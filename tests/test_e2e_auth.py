@@ -200,11 +200,11 @@ async def test_password_reset_request_success(client):
         if current_user:
             current_user.confirmed = True
             await session.commit()
-    response = client.post("api/auth/password-reset-request", params={"email": user_data.get("email")})
-    assert response.status_code == 200, response.text
-    assert response.json() == {"message": "Password reset link has been sent to your email"}
-
-
+    with patch.object(auth_service, 'cache', new_callable=AsyncMock) as mock_redis:
+        mock_redis.get.return_value = user_data.get("email")
+        response = client.post("api/auth/password-reset-request", params={"email": user_data.get("email")})
+        assert response.status_code == 200, response.text
+        assert response.json() == {"message": "Password reset link has been sent to your email"}
 
 
 @pytest.mark.asyncio
